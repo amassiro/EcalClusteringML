@@ -48,6 +48,14 @@ Run general dumper (per crystal, CaloParticle, PFcluster, superCluster infos) on
 New dumper
 ====
     
+    mkdir ECALValidation
+    cd ECALValidation/
+    git clone git@github.com:amassiro/EcalClusteringML.git
+    
+    cmsenv
+    scramv1 b -j 20
+    
+    
 New dumper with only:
 
     - sim energy (and all sim hits?)
