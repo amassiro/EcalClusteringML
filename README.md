@@ -48,6 +48,8 @@ Run general dumper (per crystal, CaloParticle, PFcluster, superCluster infos) on
 New dumper
 ====
     
+    cd /afs/cern.ch/user/a/amassiro/work/ECAL/SIM/CMSSW_11_2_2_patch1/src/
+    
     mkdir ECALValidation
     cd ECALValidation/
     git clone git@github.com:amassiro/EcalClusteringML.git
