@@ -39,6 +39,13 @@
 
 
 
+// Energy Sim dumper
+
+#include "SimDataFormats/CaloAnalysis/interface/SimCluster.h"
+#include "SimDataFormats/CaloAnalysis/interface/CaloParticle.h"
+
+#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
+
 
 // ECAL specific
 
@@ -92,6 +99,8 @@ private:
   edm::EDGetTokenT<EEDigiCollection> _token_eedigi;
   
   const EcalPedestals* _peds;
+  
+  edm::EDGetTokenT<std::vector<CaloParticle> > _caloPartToken;
   
   
   TTree *_outTree;
@@ -267,6 +276,36 @@ SimDigiTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   
   //---- dump sim energy
   
+  edm::Handle<std::vector<CaloParticle> > caloParticles;
+  iEvent.getByToken(_caloPartToken,caloParticles);
+  if (!caloParticles.isValid()) {
+    std::cerr << "Analyze --> caloParticles not found" << std::endl; 
+    return;
+  }
+  
+  
+  std::vector<CaloParticle> caloParts;
+  std::vector<GlobalPoint> caloParts_position;
+  int caloParticle_size = 0;
+  for(const auto& iCalo : *(caloParticles.product())) {
+    caloParticle_size++;
+//     std::vector<std::pair<DetId, float> > caloParticle_hitsAndEnergies = *getHitsAndEnergiesCaloPart(&iCalo,-1.);
+//     GlobalPoint caloParticle_position = calculateAndSetPositionActual(&caloParticle_hitsAndEnergies, 7.4, 3.1, 1.2, 4.2, 0.89, 0.,true);
+//     if(caloParticle_position == GlobalPoint(-999999., -999999., -999999.)){
+//       std::cout << "Invalid position for caloParticle, skipping caloParticle!" << std::endl;
+//       continue;
+//     }    
+//     
+//     hitsAndEnergies_CaloPart.push_back(caloParticle_hitsAndEnergies);
+//     caloParts_position.push_back(caloParticle_position);
+//     caloParts.push_back(iCalo); 
+  }
+  
+  
+  for(unsigned int iCalo=0; iCalo<caloParts.size(); iCalo++){
+  
+   
+  }
   
   
   _outTree->Fill();  
