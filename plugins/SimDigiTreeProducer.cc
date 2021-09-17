@@ -149,6 +149,7 @@ SimDigiTreeProducer::SimDigiTreeProducer(const edm::ParameterSet& iConfig) //,  
   
   _token_ebdigi = consumes<EBDigiCollection>(iConfig.getParameter<edm::InputTag>("EBDigiCollection"));
   _token_eedigi = consumes<EEDigiCollection>(iConfig.getParameter<edm::InputTag>("EEDigiCollection"));
+  _caloPartToken = consumes<std::vector<CaloParticle> >(iConfig.getParameter<edm::InputTag>("caloParticleCollection"));
   
   
   //   _pedsToken = myConsumesCollector.esConsumes<EcalPedestals, EcalPedestalsRcd>();
@@ -229,7 +230,7 @@ SimDigiTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   }
   for (int ixtal=0; ixtal < 14648; ixtal++) {
     for (int i=0; i<10; i++) _digi_ped_subtracted_EE[ixtal*10+i] = -999;
-    for (int i=0; i<5; i++) _simenergy_EB[ixtal*5+i] = 0.;
+    for (int i=0; i<5; i++) _simenergy_EE[ixtal*5+i] = 0.;
     _ix[ixtal] = -999;
     _iy[ixtal] = -999;
     _iz[ixtal] = -999;
@@ -284,28 +285,36 @@ SimDigiTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   }
   
   
-  std::vector<CaloParticle> caloParts;
-  std::vector<GlobalPoint> caloParts_position;
-  int caloParticle_size = 0;
-  for(const auto& iCalo : *(caloParticles.product())) {
-    caloParticle_size++;
-//     std::vector<std::pair<DetId, float> > caloParticle_hitsAndEnergies = *getHitsAndEnergiesCaloPart(&iCalo,-1.);
-//     GlobalPoint caloParticle_position = calculateAndSetPositionActual(&caloParticle_hitsAndEnergies, 7.4, 3.1, 1.2, 4.2, 0.89, 0.,true);
-//     if(caloParticle_position == GlobalPoint(-999999., -999999., -999999.)){
-//       std::cout << "Invalid position for caloParticle, skipping caloParticle!" << std::endl;
-//       continue;
-//     }    
-//     
-//     hitsAndEnergies_CaloPart.push_back(caloParticle_hitsAndEnergies);
-//     caloParts_position.push_back(caloParticle_position);
-//     caloParts.push_back(iCalo); 
+  for (const auto& iCalo : *(caloParticles.product())) {
+    
+    // for each calo particle, get all energy deposits, and save them ...
+    
+    //     _simenergy_EB[ixtal] += energy
+    //     _simenergy_EE[ixtal] += energy
+
+    const auto& simClusters = iCalo.simClusters();
+    for(unsigned int iSC = 0; iSC < simClusters.size() ; iSC++){
+      auto simCluster = simClusters[iSC];  
+      auto hits_and_energies = simCluster->hits_and_energies();
+      for(unsigned int i = 0; i < hits_and_energies.size(); i++){   
+//         det id = DetId(hits_and_energies[i].first)
+//         energy = hits_and_energies[i].second
+        
+        DetId id(hits_and_energies[i].first);
+        
+        if(id.subdetId()==EcalBarrel) {
+          EBDetId eb_id(id);
+          _simenergy_EB[eb_id.hashedIndex()] += hits_and_energies[i].second;
+        }
+        else if(id.subdetId()==EcalEndcap) {
+          EEDetId ee_id(id);
+          _simenergy_EE[ee_id.hashedIndex()] += hits_and_energies[i].second;
+        }
+        
+      }  
+    }
   }
   
-  
-  for(unsigned int iCalo=0; iCalo<caloParts.size(); iCalo++){
-  
-   
-  }
   
   
   _outTree->Fill();  
