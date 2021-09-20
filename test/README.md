@@ -7,6 +7,6 @@ Example
     
 Plot:
 
-    r99t test.root draw.cxx
+    r99t test.root test/draw.cxx
     
     

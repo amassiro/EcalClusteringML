@@ -302,13 +302,15 @@ SimDigiTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
         
         DetId id(hits_and_energies[i].first);
         
+        int bunch_cross = 0; // nominal
+        
         if(id.subdetId()==EcalBarrel) {
           EBDetId eb_id(id);
-          _simenergy_EB[eb_id.hashedIndex()] += hits_and_energies[i].second;
+          _simenergy_EB[eb_id.hashedIndex()*5 + bunch_cross + 3] += hits_and_energies[i].second;
         }
         else if(id.subdetId()==EcalEndcap) {
           EEDetId ee_id(id);
-          _simenergy_EE[ee_id.hashedIndex()] += hits_and_energies[i].second;
+          _simenergy_EE[ee_id.hashedIndex()*5 + bunch_cross + 3] += hits_and_energies[i].second;
         }
         
       }  
