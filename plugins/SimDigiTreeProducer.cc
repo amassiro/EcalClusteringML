@@ -101,7 +101,8 @@ private:
   const EcalPedestals* _peds;
   
   edm::EDGetTokenT<std::vector<CaloParticle> > _caloPartToken;
-  
+  edm::EDGetTokenT<std::vector<CaloParticle> > _puCaloPartToken;
+  edm::EDGetTokenT<std::vector<CaloParticle> > _ootpuCaloPartToken;
   
   TTree *_outTree;
   
@@ -110,14 +111,19 @@ private:
   UShort_t _bx;
   UShort_t _event;      
   
+  //
+  // it's not possible to get information about the BX of the OOT pu unfortunately
+  //      https://github.com/cms-sw/cmssw/blob/master/SimDataFormats/CaloAnalysis/interface/CaloParticle.h
+  // unless I modify the code by Badder: ReducedCaloParticleProducer
+  //
   
-  float _simenergy_EB[61200*5]; // 5 because I have - 3 BX  [0], -2 BX  [1], - 1 BX   [2], nominal BX   [3], +1 BX    [4]
+  float _simenergy_EB[61200*3]; // 3 because I have   signal [0],  PU [1], OOT PU [2]
   float _digi_ped_subtracted_EB[61200*10];
   int   _ieta[61200];
   int   _iphi[61200];
   
   
-  float _simenergy_EE[14648*5]; // 5 because I have - 3 BX  [0], -2 BX  [1], - 1 BX   [2], nominal BX   [3], +1 BX    [4]
+  float _simenergy_EE[14648*3]; // 3 because I have   signal [0],  PU [1], OOT PU [2]
   float _digi_ped_subtracted_EE[14648*10];
   int   _ix[14648];
   int   _iy[14648];
@@ -150,6 +156,8 @@ SimDigiTreeProducer::SimDigiTreeProducer(const edm::ParameterSet& iConfig) //,  
   _token_ebdigi = consumes<EBDigiCollection>(iConfig.getParameter<edm::InputTag>("EBDigiCollection"));
   _token_eedigi = consumes<EEDigiCollection>(iConfig.getParameter<edm::InputTag>("EEDigiCollection"));
   _caloPartToken = consumes<std::vector<CaloParticle> >(iConfig.getParameter<edm::InputTag>("caloParticleCollection"));
+  _puCaloPartToken     = consumes<std::vector<CaloParticle> >(iConfig.getParameter<edm::InputTag>("puCaloParticleCollection"));
+  _ootpuCaloPartToken  = consumes<std::vector<CaloParticle> >(iConfig.getParameter<edm::InputTag>("ootpuCaloParticleCollection"));
   
   
   //   _pedsToken = myConsumesCollector.esConsumes<EcalPedestals, EcalPedestalsRcd>();
@@ -162,12 +170,12 @@ SimDigiTreeProducer::SimDigiTreeProducer(const edm::ParameterSet& iConfig) //,  
   _outTree->Branch("event",             &_event,           "event/i");
   
   _outTree->Branch("digi_ped_subtracted_EB",        _digi_ped_subtracted_EB,        "digi_ped_subtracted_EB[612000]/F"); // 61200*10
-  _outTree->Branch("simenergy_EB",                  _simenergy_EB,        "simenergy_EB[306000]/F"); // 61200*5
+  _outTree->Branch("simenergy_EB",                  _simenergy_EB,        "simenergy_EB[183600]/F"); // 61200*3
   _outTree->Branch("ieta",                _ieta,                "ieta[61200]/I");
   _outTree->Branch("iphi",                _iphi,                "iphi[61200]/I");
   
   _outTree->Branch("digi_ped_subtracted_EE",        _digi_ped_subtracted_EE,        "digi_ped_subtracted_EE[146480]/F"); // 14648*10
-  _outTree->Branch("simenergy_EE",                  _simenergy_EE,        "simenergy_EE[73240]/F"); // 14648*5
+  _outTree->Branch("simenergy_EE",                  _simenergy_EE,        "simenergy_EE[43944]/F"); // 14648*3
   _outTree->Branch("ix",                  _ix,                  "ix[14648]/I");
   _outTree->Branch("iy",                  _iy,                  "iy[14648]/I");
   _outTree->Branch("iz",                  _iz,                  "iz[14648]/I");
@@ -224,13 +232,13 @@ SimDigiTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   //---- setup default
   for (int ixtal=0; ixtal < 61200; ixtal++) {
     for (int i=0; i<10; i++) _digi_ped_subtracted_EB[ixtal*10+i] = -999;
-    for (int i=0; i<5; i++) _simenergy_EB[ixtal*5+i] = 0.;
+    for (int i=0; i<3; i++) _simenergy_EB[ixtal*3+i] = 0.;
     _ieta[ixtal] = -999;
     _iphi[ixtal] = -999;
   }
   for (int ixtal=0; ixtal < 14648; ixtal++) {
     for (int i=0; i<10; i++) _digi_ped_subtracted_EE[ixtal*10+i] = -999;
-    for (int i=0; i<5; i++) _simenergy_EE[ixtal*5+i] = 0.;
+    for (int i=0; i<3; i++) _simenergy_EE[ixtal*3+i] = 0.;
     _ix[ixtal] = -999;
     _iy[ixtal] = -999;
     _iz[ixtal] = -999;
@@ -285,6 +293,14 @@ SimDigiTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   }
   
   
+//   
+//   for reference:
+//   https://github.com/cms-sw/cmssw/blob/master/SimDataFormats/CaloAnalysis/interface/SimCluster.h
+//   https://github.com/cms-sw/cmssw/blob/master/SimDataFormats/CaloAnalysis/interface/CaloParticle.h#L72
+// 
+  
+  // signal calo particles
+  
   for (const auto& iCalo : *(caloParticles.product())) {
     
     // for each calo particle, get all energy deposits, and save them ...
@@ -306,17 +322,102 @@ SimDigiTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
         
         if(id.subdetId()==EcalBarrel) {
           EBDetId eb_id(id);
-          _simenergy_EB[eb_id.hashedIndex()*5 + bunch_cross + 3] += hits_and_energies[i].second;
+          _simenergy_EB[eb_id.hashedIndex()*3 + bunch_cross] += hits_and_energies[i].second;
         }
         else if(id.subdetId()==EcalEndcap) {
           EEDetId ee_id(id);
-          _simenergy_EE[ee_id.hashedIndex()*5 + bunch_cross + 3] += hits_and_energies[i].second;
+          _simenergy_EE[ee_id.hashedIndex()*3 + bunch_cross] += hits_and_energies[i].second;
         }
         
       }  
     }
   }
   
+  
+  
+  edm::Handle<std::vector<CaloParticle> > puCaloParticle;
+  iEvent.getByToken(_puCaloPartToken,puCaloParticle);
+  if (!puCaloParticle.isValid()) {
+    std::cerr << "Analyze --> puCaloParticle not found" << std::endl; 
+    return;
+  }
+  
+  
+  
+  // in time pu calo particles
+  
+  for (const auto& iCalo : *(puCaloParticle.product())) {
+    
+    // for each calo particle, get all energy deposits, and save them ...
+    
+    const auto& simClusters = iCalo.simClusters();
+    for(unsigned int iSC = 0; iSC < simClusters.size() ; iSC++){
+      auto simCluster = simClusters[iSC];  
+      auto hits_and_energies = simCluster->hits_and_energies();
+      for(unsigned int i = 0; i < hits_and_energies.size(); i++){   
+        //         det id = DetId(hits_and_energies[i].first)
+        //         energy = hits_and_energies[i].second
+        
+        DetId id(hits_and_energies[i].first);
+        
+        int bunch_cross = 0; // nominal
+        
+        if(id.subdetId()==EcalBarrel) {
+          EBDetId eb_id(id);
+          _simenergy_EB[eb_id.hashedIndex()*3 + bunch_cross + 1] += hits_and_energies[i].second;
+        }
+        else if(id.subdetId()==EcalEndcap) {
+          EEDetId ee_id(id);
+          _simenergy_EE[ee_id.hashedIndex()*3 + bunch_cross + 1] += hits_and_energies[i].second;
+        }
+        
+      }  
+    }
+  }
+  
+  
+  
+  
+  edm::Handle<std::vector<CaloParticle> > ootpuCaloParticle;
+  iEvent.getByToken(_ootpuCaloPartToken,ootpuCaloParticle);
+  if (!ootpuCaloParticle.isValid()) {
+    std::cerr << "Analyze --> ootpuCaloParticle not found" << std::endl; 
+    return;
+  }
+  
+  
+  
+  
+  // out of time pu calo particles
+  
+  for (const auto& iCalo : *(ootpuCaloParticle.product())) {
+    
+    // for each calo particle, get all energy deposits, and save them ...
+    
+    const auto& simClusters = iCalo.simClusters();
+    for(unsigned int iSC = 0; iSC < simClusters.size() ; iSC++){
+      auto simCluster = simClusters[iSC];  
+      auto hits_and_energies = simCluster->hits_and_energies();
+      for(unsigned int i = 0; i < hits_and_energies.size(); i++){   
+        //         det id = DetId(hits_and_energies[i].first)
+        //         energy = hits_and_energies[i].second
+        
+        DetId id(hits_and_energies[i].first);
+        
+        int bunch_cross = 0; // nominal
+        
+        if(id.subdetId()==EcalBarrel) {
+          EBDetId eb_id(id);
+          _simenergy_EB[eb_id.hashedIndex()*3 + bunch_cross + 2] += hits_and_energies[i].second;
+        }
+        else if(id.subdetId()==EcalEndcap) {
+          EEDetId ee_id(id);
+          _simenergy_EE[ee_id.hashedIndex()*3 + bunch_cross + 2] += hits_and_energies[i].second;
+        }
+        
+      }  
+    }
+  }
   
   
   _outTree->Fill();  

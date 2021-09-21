@@ -51,8 +51,10 @@ process.SimDigiTreeProducer = cms.EDAnalyzer('SimDigiTreeProducer',
                             EBDigiCollection = cms.InputTag("ecalDigis",  "ebDigis"),
                             EEDigiCollection = cms.InputTag("ecalDigis",  "eeDigis"),
 
-                           caloParticleCollection = cms.InputTag("signalCaloParticles"),
-
+                           caloParticleCollection          = cms.InputTag("signalCaloParticles"),
+                           puCaloParticleCollection        = cms.InputTag("reducedCaloParticlesPU"),
+                           ootpuCaloParticleCollection     = cms.InputTag("reducedCaloParticlesOOTPU"),
+    
                            )
 
 
