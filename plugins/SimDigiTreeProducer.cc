@@ -317,16 +317,14 @@ SimDigiTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 //         energy = hits_and_energies[i].second
         
         DetId id(hits_and_energies[i].first);
-        
-        int bunch_cross = 0; // nominal
-        
+                
         if(id.subdetId()==EcalBarrel) {
           EBDetId eb_id(id);
-          _simenergy_EB[eb_id.hashedIndex()*3 + bunch_cross] += hits_and_energies[i].second;
+          _simenergy_EB[eb_id.hashedIndex()*3] += hits_and_energies[i].second;
         }
         else if(id.subdetId()==EcalEndcap) {
           EEDetId ee_id(id);
-          _simenergy_EE[ee_id.hashedIndex()*3 + bunch_cross] += hits_and_energies[i].second;
+          _simenergy_EE[ee_id.hashedIndex()*3] += hits_and_energies[i].second;
         }
         
       }  
@@ -353,25 +351,32 @@ SimDigiTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     const auto& simClusters = iCalo.simClusters();
     for(unsigned int iSC = 0; iSC < simClusters.size() ; iSC++){
       auto simCluster = simClusters[iSC];  
-      auto hits_and_energies = simCluster->hits_and_energies();
+      auto hits_and_energies = simCluster->hits_and_fractions();
+      float totalenergy = simCluster->simEnergy();
+//       std::cout << " totalenergy PU iSC [ " << iSC << "] = " << totalenergy << std::endl;
       for(unsigned int i = 0; i < hits_and_energies.size(); i++){   
         //         det id = DetId(hits_and_energies[i].first)
         //         energy = hits_and_energies[i].second
+
+//         std::cout << "    [" << i << "] = " << (hits_and_energies[i].second) << std::endl;
         
         DetId id(hits_and_energies[i].first);
-        
-        int bunch_cross = 0; // nominal
+                
+//         fraction = hAndE.second / totalenergy;
         
         if(id.subdetId()==EcalBarrel) {
           EBDetId eb_id(id);
-          _simenergy_EB[eb_id.hashedIndex()*3 + bunch_cross + 1] += hits_and_energies[i].second;
+          _simenergy_EB[eb_id.hashedIndex()*3 + 1] += ( (hits_and_energies[i].second) );
+          totalenergy += ( (hits_and_energies[i].second) );
         }
         else if(id.subdetId()==EcalEndcap) {
           EEDetId ee_id(id);
-          _simenergy_EE[ee_id.hashedIndex()*3 + bunch_cross + 1] += hits_and_energies[i].second;
+          _simenergy_EE[ee_id.hashedIndex()*3 + 1] += ( (hits_and_energies[i].second) );
+          totalenergy += ( (hits_and_energies[i].second) );
         }
         
-      }  
+      } 
+//       std::cout << "   sum fraction = " << totalenergy << std::endl;
     }
   }
   
@@ -391,33 +396,39 @@ SimDigiTreeProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   // out of time pu calo particles
   
   for (const auto& iCalo : *(ootpuCaloParticle.product())) {
-    
+      
     // for each calo particle, get all energy deposits, and save them ...
     
     const auto& simClusters = iCalo.simClusters();
     for(unsigned int iSC = 0; iSC < simClusters.size() ; iSC++){
       auto simCluster = simClusters[iSC];  
-      auto hits_and_energies = simCluster->hits_and_energies();
+      auto hits_and_energies = simCluster->hits_and_fractions();
+      float totalenergy = simCluster->simEnergy();
+//       std::cout << " totalenergy OOTPU iSC [ " << iSC << "] = " << totalenergy << std::endl;
+      
       for(unsigned int i = 0; i < hits_and_energies.size(); i++){   
         //         det id = DetId(hits_and_energies[i].first)
         //         energy = hits_and_energies[i].second
         
         DetId id(hits_and_energies[i].first);
-        
-        int bunch_cross = 0; // nominal
+                
+        //         fraction = hAndE.second / totalenergy;
         
         if(id.subdetId()==EcalBarrel) {
           EBDetId eb_id(id);
-          _simenergy_EB[eb_id.hashedIndex()*3 + bunch_cross + 2] += hits_and_energies[i].second;
+          _simenergy_EB[eb_id.hashedIndex()*3 + 2] += ( (hits_and_energies[i].second) );
+          totalenergy += ( (hits_and_energies[i].second) );
         }
         else if(id.subdetId()==EcalEndcap) {
           EEDetId ee_id(id);
-          _simenergy_EE[ee_id.hashedIndex()*3 + bunch_cross + 2] += hits_and_energies[i].second;
+          _simenergy_EE[ee_id.hashedIndex()*3 + 2] += ( (hits_and_energies[i].second) );
+          totalenergy += ( (hits_and_energies[i].second) );
         }
-        
       }  
+//       std::cout << "   sum fraction = " << totalenergy << std::endl;
     }
   }
+  
   
   
   _outTree->Fill();  

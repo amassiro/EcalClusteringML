@@ -2,11 +2,13 @@
 
 void draw() {
 
-  TCanvas* ccEB = new TCanvas ("ccEB","",1600,600);
-  TCanvas* ccEE = new TCanvas ("ccEE","",1600,600);
+  gStyle->SetOptStat(0);
   
-  TCanvas* ccEB_PU = new TCanvas ("ccEB_PU","",1600,600);
-  TCanvas* ccEE_PU = new TCanvas ("ccEE_PU","",1600,600);
+  TCanvas* ccEB = new TCanvas ("ccEB","Signal",1600,600);
+  TCanvas* ccEE = new TCanvas ("ccEE","Signal",1600,600);
+  
+  TCanvas* ccEB_PU = new TCanvas ("ccEB_PU","PU",1600,600);
+  TCanvas* ccEE_PU = new TCanvas ("ccEE_PU","PU",1600,600);
   
   
   TTree* tree = (TTree*) _file0->Get("SimDigiTreeProducer/tree");
@@ -73,19 +75,19 @@ void draw() {
     tree->GetEntry(ievent);
     
     for (int iEBchannel = 0; iEBchannel<61200; iEBchannel++) {
-      if (simenergy_EB[iEBchannel*3+0] > 1) {
+      if (simenergy_EB[iEBchannel*3+0] > 0) {
         histoEB_SimEnergy->Fill( iphi[iEBchannel], ieta[iEBchannel], simenergy_EB[iEBchannel*3+0] );   
       }
-      if (simenergy_EB[iEBchannel*3+1] > 1) {
+      if (simenergy_EB[iEBchannel*3+1] > 0) {
         histoEB_SimEnergy_PU->Fill( iphi[iEBchannel], ieta[iEBchannel], simenergy_EB[iEBchannel*3+1] );   
       }
     }
     
     for (int iEEchannel = 0; iEEchannel<14648; iEEchannel++) {
-      if (simenergy_EE[iEEchannel*3+0] > 1) {
+      if (simenergy_EE[iEEchannel*3+0] > 0) {
         histoEE_SimEnergy->Fill(ix[iEEchannel] + 100*(iz[iEEchannel]>0), iy[iEEchannel] , simenergy_EE[iEEchannel*3+0] );
       }
-      if (simenergy_EE[iEEchannel*3+1] > 1) {
+      if (simenergy_EE[iEEchannel*3+1] > 0) {
         histoEE_SimEnergy_PU->Fill(ix[iEEchannel] + 100*(iz[iEEchannel]>0), iy[iEEchannel] , simenergy_EE[iEEchannel*3+1] );
       }
     }
