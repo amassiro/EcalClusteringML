@@ -9,7 +9,12 @@ void draw() {
   
   TCanvas* ccEB_PU = new TCanvas ("ccEB_PU","PU",1600,600);
   TCanvas* ccEE_PU = new TCanvas ("ccEE_PU","PU",1600,600);
+ 
+  TCanvas* ccEB_OOTPU = new TCanvas ("ccEB_OOTPU","OOTPU",1600,600);
+  TCanvas* ccEE_OOTPU = new TCanvas ("ccEE_OOTPU","OOTPU",1600,600);
   
+  TCanvas* ccEB_digi5 = new TCanvas ("ccEB_digi5","Digi5",1600,600);
+  TCanvas* ccEE_digi5 = new TCanvas ("ccEE_digi5","Digi5",1600,600);
   
   TTree* tree = (TTree*) _file0->Get("SimDigiTreeProducer/tree");
   
@@ -71,6 +76,31 @@ void draw() {
 
   
   
+  
+  TH2F* histoEB_SimEnergy_OOTPU = new TH2F ("histoEB_SimEnergy_OOTPU", "SimEnergy_OOTPU" ,  360, 0.5, 360.5,  171, -85.5, 85.5);
+  TH2F* histoEE_SimEnergy_OOTPU = new TH2F ("histoEE_SimEnergy_OOTPU", "SimEnergy_OOTPU" ,  200, 0.5, 200.5,  100, 0.5, 100.5);
+  
+  histoEB_SimEnergy_OOTPU->GetXaxis()->SetTitle("i#phi");
+  histoEB_SimEnergy_OOTPU->GetYaxis()->SetTitle("i#eta");
+  
+  histoEE_SimEnergy_OOTPU->GetXaxis()->SetTitle("x");
+  histoEE_SimEnergy_OOTPU->GetYaxis()->SetTitle("y");
+  
+  
+  
+  
+  TH2F* histoEB_Digi5 = new TH2F ("histoEB_Digi5", "Digi5" ,  360, 0.5, 360.5,  171, -85.5, 85.5);
+  TH2F* histoEE_Digi5 = new TH2F ("histoEE_Digi5", "Digi5" ,  200, 0.5, 200.5,  100, 0.5, 100.5);
+  
+  histoEB_Digi5->GetXaxis()->SetTitle("i#phi");
+  histoEB_Digi5->GetYaxis()->SetTitle("i#eta");
+  
+  histoEE_Digi5->GetXaxis()->SetTitle("x");
+  histoEE_Digi5->GetYaxis()->SetTitle("y");
+  
+  
+  
+  
   for (int ievent = 0; ievent<MAXEVENTS; ievent++) {
     tree->GetEntry(ievent);
     
@@ -81,6 +111,12 @@ void draw() {
       if (simenergy_EB[iEBchannel*3+1] > 0) {
         histoEB_SimEnergy_PU->Fill( iphi[iEBchannel], ieta[iEBchannel], simenergy_EB[iEBchannel*3+1] );   
       }
+      if (simenergy_EB[iEBchannel*3+2] > 0) {
+        histoEB_SimEnergy_OOTPU->Fill( iphi[iEBchannel], ieta[iEBchannel], simenergy_EB[iEBchannel*3+2] );   
+      }
+      if (digi_ped_subtracted_EB[iEBchannel*10+4] > 0) {
+        histoEB_Digi5->Fill( iphi[iEBchannel], ieta[iEBchannel], digi_ped_subtracted_EB[iEBchannel*10+4] );   
+      }
     }
     
     for (int iEEchannel = 0; iEEchannel<14648; iEEchannel++) {
@@ -90,6 +126,12 @@ void draw() {
       if (simenergy_EE[iEEchannel*3+1] > 0) {
         histoEE_SimEnergy_PU->Fill(ix[iEEchannel] + 100*(iz[iEEchannel]>0), iy[iEEchannel] , simenergy_EE[iEEchannel*3+1] );
       }
+      if (simenergy_EE[iEEchannel*3+2] > 0) {
+        histoEE_SimEnergy_OOTPU->Fill(ix[iEEchannel] + 100*(iz[iEEchannel]>0), iy[iEEchannel] , simenergy_EE[iEEchannel*3+2] );
+      }
+      if (digi_ped_subtracted_EE[iEEchannel*10+4] > 0) {
+        histoEE_Digi5->Fill(ix[iEEchannel] + 100*(iz[iEEchannel]>0), iy[iEEchannel], digi_ped_subtracted_EE[iEEchannel*10+4] );   
+      }
     }
     
   }
@@ -97,28 +139,40 @@ void draw() {
   
   
   
-  ccEE->cd();
-  histoEE_SimEnergy->Draw("colz");
-  
-  
   ccEB->cd();
   histoEB_SimEnergy->Draw("colz");
   
+  ccEE->cd();
+  histoEE_SimEnergy->Draw("colz");
   
-  
-  
-  
-  
-  ccEE_PU->cd();
-  histoEE_SimEnergy_PU->Draw("colz");
   
   
   ccEB_PU->cd();
   histoEB_SimEnergy_PU->Draw("colz");
   
+  ccEE_PU->cd();
+  histoEE_SimEnergy_PU->Draw("colz");
   
-
-
+  
+  
+  ccEB_OOTPU->cd();
+  histoEB_SimEnergy_OOTPU->Draw("colz");
+  
+  ccEE_OOTPU->cd();
+  histoEE_SimEnergy_OOTPU->Draw("colz");
+  
+  
+  
+  ccEB_digi5->cd();
+  histoEB_Digi5->Draw("colz");
+  
+  ccEE_digi5->cd();
+  histoEE_Digi5->Draw("colz");
+  
+  
+  
+  
+  
   
 }
 
