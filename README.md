@@ -29,6 +29,9 @@ Produce GEN-SIM (QCD):
     cd RecoSimStudies/Dumpers/test/
     cmsRun QCD_Pt-15to7000_TuneCUETP8M1_Flat_14TeV-pythia8_cfi_GEN_SIM.py maxEvents=100 #QCD
     
+    cmsRun ElectronsGunPt1-100_pythia8_cfi_GEN_SIM.py maxEvents=100 #Electron gun
+    
+    
 Produce DIGI-RAW (Standard Mixing):
 
     cd RecoSimStudies/Dumpers/test/
