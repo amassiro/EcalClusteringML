@@ -15,6 +15,7 @@ Install:
     cd CMSSW_11_2_2_patch1/src/
     cmsenv
     git cms-init
+    git cms-merge-topic bmarzocc:ParticleGuns_CMSSW_11_2_2_patch1 #if you produce particle-guns
     git cms-merge-topic bmarzocc:CaloParticles_CMSSW_11_2_2_patch1 #if you produce RAW samples with caloParticles
     
     git clone https://github.com/bmarzocc/RecoSimStudies
